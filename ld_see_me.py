@@ -4,6 +4,10 @@ import logging
 import maya.cmds as mc
 
 
+__author__ = 'Lee Dunham'
+__version__ = '0.1.2'
+
+
 LOG = logging.getLogger('ld_see_me')
 ELEMENT_PREFIX = 'LDSeeMe'
 GROUP_NAME = ELEMENT_PREFIX + '_grp'
