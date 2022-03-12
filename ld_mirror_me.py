@@ -27,7 +27,7 @@ Usage with UI:
     >>> ld_mirror_me.launch()
 
 """
-import functools
+from functools import wraps
 import logging
 
 import maya.cmds as mc
@@ -38,7 +38,7 @@ __author__ = 'Lee Dunham'
 __version__ = '2.0.1'
 
 
-log = logging.getLogger('ld_mirror_me')
+LOG = logging.getLogger('ld_mirror_me')
 
 
 # ------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ class OptimiseContext(object):
         return False
 
     def __call__(self, f):
-        @functools.wraps(f)
+        @wraps(f)
         def decorated(*args, **kwargs):
             with self:
                 return f(*args, **kwargs)
@@ -82,7 +82,6 @@ def get_deformer_info(handle):
     return results
 
 
-# removing unwanted vertices from multiple influenced objects
 def get_deformer_info_by_node(node, handle):
     deformer_info = get_deformer_info(handle)
     results = [
@@ -102,7 +101,7 @@ def shapeMirror(shape_list, position, axis, search, replace):
 
     for shape in shape_list:
         if not mc.listRelatives(shape, shapes=True, type='nurbsCurve'):
-            log.warning('Current version only supports nurbs curve.')
+            LOG.warning('Current version only supports nurbs curve.')
             continue
 
         orig_pos = mc.xform(shape, q=True, ws=True, rp=True)
@@ -189,7 +188,6 @@ def meshMirror(original, target_list, position, axis, search, replace):
         mc.rename(mirror_obj, mirror)
 
 
-# mirror deformer command
 @OptimiseContext()
 def deformerMirror(node, handle_list, axis, search, replace):
 
@@ -198,7 +196,7 @@ def deformerMirror(node, handle_list, axis, search, replace):
 
     for handle in handle_list:
         if not mc.listRelatives(handle, shapes=True, type='clusterHandle'):
-            log.warning('Current version only supports Cluster deformers.')
+            LOG.warning('Current version only supports Cluster deformers.')
             continue
 
         shapes = mc.listRelatives(node, shapes=True)
@@ -233,7 +231,7 @@ def deformerMirror(node, handle_list, axis, search, replace):
 
 
 # ------------------------------------------------------------------------------
-class MirrorMeUi(object):
+class LDMirrorMeUi(object):
     win_name = 'ld_mirrorMe_win'
 
     MODE_SHAPE = 1
@@ -260,7 +258,7 @@ class MirrorMeUi(object):
     def addToField(self, field, multi):
         objects = mc.ls(sl=True, objectsOnly=True)
         if not objects:
-            log.warning('No objects selected!')
+            LOG.warning('No objects selected!')
             return
 
         data = ', '.join(objects) if multi else objects[0]
@@ -310,11 +308,11 @@ class MirrorMeUi(object):
         for target in target_str.split(','):
             target = target.strip()
             if self._get_shape_type(target) != node_type:
-                log.warning('"{}" is not the same type as "{}"!'.format(target, original))
+                LOG.warning('"{}" is not the same type as "{}"!'.format(target, original))
                 continue
 
             if self._get_component_count(target) != orig_count:
-                log.warning('"{}" does not have the same component count as "{}"!'.format(target, original))
+                LOG.warning('"{}" does not have the same component count as "{}"!'.format(target, original))
                 continue
 
             target_list.append(target)
@@ -531,10 +529,14 @@ class MirrorMeUi(object):
 
 # ------------------------------------------------------------------------------
 def launch():
-    ui = MirrorMeUi()
+    ui = LDMirrorMeUi()
     return ui
+
+
+def main():
+    return launch()
 
 
 # ------------------------------------------------------------------------------
 if __name__ == '__main__':
-    launch()
+    main()

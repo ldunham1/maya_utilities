@@ -8,7 +8,7 @@ __author__ = 'Lee Dunham'
 __version__ = '1.5.2'
 
 
-log = logging.getLogger('ld_select_me')
+LOG = logging.getLogger('ld_select_me')
 
 
 # ------------------------------------------------------------------------------
@@ -17,7 +17,7 @@ class DataHandler(object):
         node_list = mc.textScrollList(array_field, q=True, ai=True) or mc.ls(sl=True)
         set_name = mc.textField(text_field, q=True, tx=True)
         if not node_list:
-            log.error('No objects to create set.')
+            LOG.error('No objects to create set.')
             return
 
         ns = node_list[0].rsplit(':', 1)[0]
@@ -62,11 +62,11 @@ class DataHandler(object):
                 p=current_shelf,
             )
             mc.shelfButton(button, e=True, label=label)
-            log.info('Shelf button "{}" added!!'.format(label))
+            LOG.info('Shelf button "{}" added!!'.format(label))
 
 
 # ------------------------------------------------------------------------------
-class SelectMeUi(object):
+class LDSelectMeUi(object):
     win_name = 'ld_selSets_win'
 
     def __init__(self):
@@ -79,7 +79,7 @@ class SelectMeUi(object):
     def add(self, field):
         selection = mc.ls(sl=True)
         if selection is None:
-            log.warning('Nothing selected')
+            LOG.warning('Nothing selected')
             return
 
         mc.textScrollList(field, e=True, removeAll=True)
@@ -153,7 +153,7 @@ class SelectMeUi(object):
 
 # ------------------------------------------------------------------------------
 def launch():
-    ui = SelectMeUi()
+    ui = LDSelectMeUi()
     return ui
 
 

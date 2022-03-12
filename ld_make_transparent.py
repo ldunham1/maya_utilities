@@ -52,11 +52,12 @@ def get_shader_mapping_for_node(node):
 
 
 # ------------------------------------------------------------------------------
-def toggle_transparency(object_list):
+def toggle_transparency(object_list=None):
     """
     Toggle the transparency of objects or components.
 
-    :return: None
+    :param object_list: List of objects to affect. Use selection if None given.
+    :type object_list: list(str) / None
     """
     object_list = object_list or mc.ls(sl=True)
     if not object_list:
@@ -70,3 +71,12 @@ def toggle_transparency(object_list):
 
     mc.select(object_list)
     mc.hyperShade(assign=shader)
+
+
+def main():
+    toggle_transparency()
+
+
+# ------------------------------------------------------------------------------
+if __name__ == '__main__':
+    main()

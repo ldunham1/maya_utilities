@@ -1,4 +1,4 @@
-from functools import partial
+from functools import partial, wraps
 
 import maya.cmds as mc
 
@@ -9,13 +9,19 @@ GROUPMOVER_TGT_SOURCE_ATTR = 'ld_group_mover_source'
 
 # ------------------------------------------------------------------------------
 class UndoChunk(object):
-    
     def __enter__(self):
         mc.undoInfo(ock=True)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         mc.undoInfo(cck=True)
         return False
+
+    def __call__(self, func):
+        @wraps(func)
+        def decorated(*args, **kwargs):
+            with self:
+                return func(*args, **kwargs)
+        return decorated
 
 
 # ------------------------------------------------------------------------------
@@ -35,25 +41,25 @@ def find_group_movers():
     )
 
 
+@UndoChunk()
 def move(mover):
-    with UndoChunk():
-        to_delete = []
-        for child in mc.listRelatives(mover, c=True, path=True):
-            if not mc.attributeQuery(GROUPMOVER_TGT_SOURCE_ATTR, n=child, ex=True):
-                continue
+    to_delete = []
+    for child in mc.listRelatives(mover, c=True, path=True):
+        if not mc.attributeQuery(GROUPMOVER_TGT_SOURCE_ATTR, n=child, ex=True):
+            continue
 
-            target = mc.listConnections(child + '.' + GROUPMOVER_TGT_SOURCE_ATTR, destination=False)
-            if not target:
-                to_delete.append(child)
-                continue
+        target = mc.listConnections(child + '.' + GROUPMOVER_TGT_SOURCE_ATTR, destination=False)
+        if not target:
+            to_delete.append(child)
+            continue
 
-            position = mc.xform(child, q=True, ws=True, t=True)
-            rotation = mc.xform(child, q=True, ws=True, ro=True)
-            mc.xform(target, ws=True, t=position, ro=rotation)
+        position = mc.xform(child, q=True, ws=True, t=True)
+        rotation = mc.xform(child, q=True, ws=True, ro=True)
+        mc.xform(target, ws=True, t=position, ro=rotation)
 
-        # Cleanup obsolete sources.
-        if to_delete:
-            mc.delete(to_delete)
+    # Cleanup obsolete sources.
+    if to_delete:
+        mc.delete(to_delete)
 
 
 def setup_callbacks(mover):
@@ -105,6 +111,10 @@ def delete(movers=None):
         mc.delete(movers)
 
 
+def main():
+    create_group_mover(mc.ls(sl=True))
+
+
 # ------------------------------------------------------------------------------
 if __name__ == '__main__':
-    create_group_mover(mc.ls(sl=True))
+    main()
