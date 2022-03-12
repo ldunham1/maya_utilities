@@ -1,34 +1,16 @@
-from functools import partial, wraps
+from functools import partial
 
 import maya.cmds as mc
+
+from .. import utils
+
+
+__author__ = 'Lee Dunham'
+__version__ = '1.2.0'
 
 
 GROUPMOVER_ID_ATTR = 'ld_group_mover'
 GROUPMOVER_TGT_SOURCE_ATTR = 'ld_group_mover_source'
-
-
-# ------------------------------------------------------------------------------
-class UndoChunk(object):
-    def __enter__(self):
-        mc.undoInfo(ock=True)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        mc.undoInfo(cck=True)
-        return False
-
-    def __call__(self, func):
-        @wraps(func)
-        def decorated(*args, **kwargs):
-            with self:
-                return func(*args, **kwargs)
-        return decorated
-
-
-# ------------------------------------------------------------------------------
-def snap_objects(source, target):
-    position = mc.xform(source, q=True, ws=True, t=True)
-    rotation = mc.xform(source, q=True, ws=True, ro=True)
-    mc.xform(target, ws=True, t=position, ro=rotation)
 
 
 # ------------------------------------------------------------------------------
@@ -41,7 +23,7 @@ def find_group_movers():
     )
 
 
-@UndoChunk()
+@utils.UndoChunk()
 def move(mover):
     to_delete = []
     for child in mc.listRelatives(mover, c=True, path=True):
@@ -53,9 +35,7 @@ def move(mover):
             to_delete.append(child)
             continue
 
-        position = mc.xform(child, q=True, ws=True, t=True)
-        rotation = mc.xform(child, q=True, ws=True, ro=True)
-        mc.xform(target, ws=True, t=position, ro=rotation)
+        utils.xform_snap(target, child, worldspace=True)
 
     # Cleanup obsolete sources.
     if to_delete:

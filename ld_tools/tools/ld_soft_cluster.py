@@ -7,7 +7,7 @@ Usage:
 
     .. code-block:: python
 
-        >>> import ld_soft_cluster
+        >>> from ld_tools.tools import ld_soft_cluster
         >>> ld_soft_cluster.create_soft_cluster()
 
 """
@@ -62,11 +62,8 @@ def _reposition_cluster_deformer(cluster, position):
 
     :param cluster: Cluster handle to use.
     :type cluster: str
-
     :param position: Position to use.
     :type position: list(float, float, float)
-
-    :return: None
     """
     mc.xform(cluster, a=True, ws=True, piv=(position[0], position[1], position[2]))
     deformer = mc.listRelatives(cluster, shapes=True)[0]
@@ -96,8 +93,13 @@ def create_soft_cluster():
         mc.percent(new_cluster[0], elements[i], v=weights[i])
 
     _reposition_cluster_deformer(new_cluster[1], position)
+    return new_cluster[1]
+
+
+def main():
+    create_soft_cluster()
 
 
 # ------------------------------------------------------------------------------
 if __name__ == '__main__':
-    create_soft_cluster()
+    main()

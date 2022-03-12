@@ -5,7 +5,7 @@ import maya.mel as mm
 
 
 __author__ = 'Lee Dunham'
-__version__ = '1.5.2'
+__version__ = '1.5.3'
 
 
 LOG = logging.getLogger('ld_select_me')
@@ -79,7 +79,7 @@ class LDSelectMeUi(object):
     def add(self, field):
         selection = mc.ls(sl=True)
         if selection is None:
-            LOG.warning('Nothing selected')
+            LOG.warning('Nothing selected.')
             return
 
         mc.textScrollList(field, e=True, removeAll=True)
@@ -110,7 +110,7 @@ class LDSelectMeUi(object):
 
     # --------------------------------------------------------------------------
     def setupUi(self):
-        title = 'SelectMe'
+        title = 'LD SelectMe'
         mc.window(
             self.win_name,
             t=title,
@@ -155,6 +155,10 @@ class LDSelectMeUi(object):
 def launch():
     ui = LDSelectMeUi()
     return ui
+
+
+def main():
+    return launch()
 
 
 # ------------------------------------------------------------------------------

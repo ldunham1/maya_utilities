@@ -23,43 +23,23 @@ Updates:
 
 Usage with UI:
 
-    >>> import ld_mirror_me
+    >>> from ld_tools.tools import ld_mirror_me
     >>> ld_mirror_me.launch()
 
 """
-from functools import wraps
 import logging
 
 import maya.cmds as mc
 import maya.mel as mm
 
+from .. import utils
+
 
 __author__ = 'Lee Dunham'
-__version__ = '2.0.1'
+__version__ = '2.1.1'
 
 
 LOG = logging.getLogger('ld_mirror_me')
-
-
-# ------------------------------------------------------------------------------
-class OptimiseContext(object):
-
-    def __enter__(self):
-        mc.undoInfo(openChunk=True)
-        mc.refresh(suspend=True)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        mc.undoInfo(closeChunk=True)
-        mc.refresh(suspend=False)
-        return False
-
-    def __call__(self, f):
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            with self:
-                return f(*args, **kwargs)
-
-        return decorated
 
 
 # ------------------------------------------------------------------------------
@@ -93,12 +73,9 @@ def get_deformer_info_by_node(node, handle):
 
 
 # ------------------------------------------------------------------------------
-@OptimiseContext()
-def shapeMirror(shape_list, position, axis, search, replace):
-
-    if not isinstance(shape_list, (list, tuple, set)):
-        shape_list = [shape_list]
-
+@utils.OptimiseContext()
+def shape_mirror(shape_list, position, axis, search, replace):
+    shape_list = utils.ensure_iterable(shape_list)
     for shape in shape_list:
         if not mc.listRelatives(shape, shapes=True, type='nurbsCurve'):
             LOG.warning('Current version only supports nurbs curve.')
@@ -123,7 +100,6 @@ def shapeMirror(shape_list, position, axis, search, replace):
         if position == 2:
             mc.move(orig_pos[0], orig_pos[1], orig_pos[2], curve_target, ws=True)
             mc.rotate(orig_rot[0], orig_rot[1], orig_rot[2], curve_target, ws=True)
-
         elif position == 3:
             mirrored_pos = list(orig_pos)
             mirrored_pos[axis] *= -1
@@ -132,7 +108,6 @@ def shapeMirror(shape_list, position, axis, search, replace):
         if mc.checkBox('ld_mCurve_colour_cBox', q=True, value=True) == 1:
             if mc.getAttr(mc.listRelatives(shape, shapes=True)[0] + '.overrideEnabled'):
                 colour_object = mc.listRelatives(curve_target, shapes=True)[0] + '.overrideColor'
-
             else:
                 colour_object = curve_target + '.overrideColor'
 
@@ -142,8 +117,8 @@ def shapeMirror(shape_list, position, axis, search, replace):
         mc.rename(curve_target, shape.replace(search, replace))
 
 
-@OptimiseContext()
-def meshMirror(original, target_list, position, axis, search, replace):
+@utils.OptimiseContext()
+def mesh_mirror(original, target_list, position, axis, search, replace):
     if not isinstance(target_list, (list, tuple, set)):
         target_list = [target_list]
 
@@ -188,8 +163,8 @@ def meshMirror(original, target_list, position, axis, search, replace):
         mc.rename(mirror_obj, mirror)
 
 
-@OptimiseContext()
-def deformerMirror(node, handle_list, axis, search, replace):
+@utils.OptimiseContext()
+def deformer_mirror(node, handle_list, axis, search, replace):
 
     if not isinstance(handle_list, (list, tuple, set)):
         handle_list = [handle_list]
@@ -290,7 +265,7 @@ class LDMirrorMeUi(object):
             shape.strip()
             for shape in original.split(',')
         ]
-        shapeMirror(
+        shape_mirror(
             shape_list,
             position,
             axis=axis,
@@ -317,7 +292,7 @@ class LDMirrorMeUi(object):
 
             target_list.append(target)
 
-        meshMirror(
+        mesh_mirror(
             original,
             target_list,
             position=position,
@@ -335,7 +310,7 @@ class LDMirrorMeUi(object):
             handle.strip()
             for handle in deformer_str.split(',')
         ]
-        deformerMirror(
+        deformer_mirror(
             original,
             handle_list,
             axis=axis,
@@ -361,7 +336,6 @@ class LDMirrorMeUi(object):
                 position=mc.radioButtonGrp('ld_mCurve_position_rBGrp', q=True, sl=True),
                 **cmd_kwargs
             )
-
         elif mode == self.MODE_MESH:
             self.applyMeshMirror(
                 mc.textField('ld_mMesh_original_tField', q=True, tx=True),
@@ -369,7 +343,6 @@ class LDMirrorMeUi(object):
                 position=mc.radioButtonGrp('ld_mMesh_position_rBGrp', q=True, sl=True),
                 **cmd_kwargs
             )
-
         elif mode == self.MODE_DEFORMER:
             self.applyDeformerMirror(
                 mc.textField('ld_mDeformer_object_tField', q=True, tx=True),

@@ -3,6 +3,10 @@ import json
 import maya.cmds as mc
 
 
+__author__ = 'Lee Dunham'
+__version__ = '1.1.0'
+
+
 SHADER_MAPPING_NODE = 'ld_shader_mapping_node'
 TRANSPARENT_SHADER_NAME = 'ld_transparencyShader'
 
