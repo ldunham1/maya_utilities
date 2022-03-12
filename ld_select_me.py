@@ -5,7 +5,7 @@ import maya.mel as mm
 
 
 __author__ = 'Lee Dunham'
-__version__ = '1.5.0'
+__version__ = '1.5.2'
 
 
 log = logging.getLogger('ld_select_me')
@@ -18,12 +18,9 @@ class DataHandler(object):
         set_name = mc.textField(text_field, q=True, tx=True)
         if not node_list:
             log.error('No objects to create set.')
+            return
 
-        ns = ''
-        namespaces = node_list[0].split(':')
-        if len(namespaces) > 1:
-            ns = ':'.join(namespaces[:-1]) + ':'
-
+        ns = node_list[0].rsplit(':', 1)[0]
         controls = [
             node.rsplit(':', 1)[-1]
             for node in node_list[:-2]
@@ -44,20 +41,20 @@ class DataHandler(object):
             '    mc.select(node_list)',
         ]
         data = '\n'.join(data).format(namespace=ns, controls=controls)
-        self.addToShelf(set_name, data, 'python', set_name)
+        self.addToShelf(set_name, data, typ='python', annotation=set_name)
 
-    def addToShelf(self, label, data, type='mel', annotation=''):
+    def addToShelf(self, label, data, typ='mel', annotation=''):
         shelf = mm.eval('global string $gShelfTopLevel; $return = $gShelfTopLevel')
         io_label = label
         if len(label) > 5:
             io_label = label[:5]
 
-        if mc.tabLayout(shelf, ex=1):
-            current_shelf = '%s|%s' % (shelf, mc.tabLayout(shelf, q=1, st=1))
+        if mc.tabLayout(shelf, ex=True):
+            current_shelf = '%s|%s' % (shelf, mc.tabLayout(shelf, q=True, st=1))
             button = mc.shelfButton(
                 label=label,
                 iol=io_label,
-                stp=type,
+                stp=typ,
                 rpt=1,
                 i1='commandButton.png',
                 ann=annotation,
@@ -83,28 +80,24 @@ class SelectMeUi(object):
         selection = mc.ls(sl=True)
         if selection is None:
             log.warning('Nothing selected')
+            return
 
-        current_list = mc.textScrollList(field, q=True, ai=True)
-        if current_list is None:
-            new_list = selection
+        mc.textScrollList(field, e=True, removeAll=True)
 
-        else:
-            new_list = set(current_list + selection)
-
-        mc.textScrollList(field, e=True, ra=True)
-        for item in new_list:
-            mc.textScrollList(field, e=True, a=item)
+        current_list = mc.textScrollList(field, q=True, allItems=True) or []
+        for item in set(current_list + selection):
+            mc.textScrollList(field, e=True, append=item)
 
     def remove(self, field):
-        node_list = mc.textScrollList(field, q=True, si=True)
+        node_list = mc.textScrollList(field, q=True, selectItem=True)
         for node in node_list:
-            mc.textScrollList(field, e=True, ri=node)
+            mc.textScrollList(field, e=True, removeItem=node)
 
     def clear(self, field):
-        mc.textScrollList(field, e=True, ra=True)
+        mc.textScrollList(field, e=True, removeAll=True)
 
     def select(self, field):
-        mc.select(mc.textScrollList(field, q=True, si=True))
+        mc.select(mc.textScrollList(field, q=True, selectItem=True))
 
     # --------------------------------------------------------------------------
     def close(self):
